@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bell Schedule - Custom Modes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 50px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-container {
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-size: 16px;
+            color: #555;
+        }
+        input[type="time"], input[type="number"], select, button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .emergency-button {
+            background-color: red;
+            color: white;
+            margin-top: 30px;
+        }
+        .previous-bell-log {
+            margin-top: 30px;
+            padding: 10px;
+            background-color: #e7f3fe;
+            border: 1px solid #bcdff1;
+            border-radius: 5px;
+            text-align: left;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            display: none;
+        }
+        .time-group {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .previous-button {
+          position: absolute;
+          left: 43%;
+          width: fit-content;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>ECE DEPARTMENT - BELL<span>&#128276;</span> SCHEDULE</h1>
+
+    <div class="form-container">
+        <form id="login-form">
+            <h3>Login to Access Bell Schedule</h3>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="button" onclick="login()">Login</button>
+        </form>
+    </div>
+
+    <div class="form-container" id="schedule-form-container" style="display:none;">
+        <form id="schedule-form">
+            <label for="mode">Select Mode:</label>
+            <select id="mode" name="mode" onchange="handleModeChange()">
+                <option value="exam">Exam</option>
+                <option value="regular">Regular</option>
+                <option value="custom">Custom</option>
+            </select>
+
+            <div id="custom-times" style="display:none;">
+                <label>Custom Bell Times:</label>
+                <div id="custom-time-group"></div>
+                <button type="button" onclick="addCustomTime()">Add Another Custom Time</button>
+            </div>
+
+            <div id="regular-times" style="display:none;">
+                <label>Regular Bell Times:</label>
+                <div id="regular-time-group"></div>
+                <button type="button" onclick="addRegularTime()">Add Another Regular Time</button>
+            </div>
+
+            <div id="exam-times">
+                <label>Exam Bell Times:</label>
+                <div id="exam-time-group"></div>
+                <button type="button" onclick="addExamTime()">Add Another Exam Time</button>
+            </div>
+
+            <div>
+                <label for="bell-duration">Bell Duration:</label>
+                <div class="duration-container">
+                    <input type="number" id="bell-duration-minutes" name="bell-duration-minutes" min="0" value="0" style="width: 60px;" placeholder="Minutes">
+                    <span>:</span>
+                    <input type="number" id="bell-duration-seconds" name="bell-duration-seconds" min="1" value="5" style="width: 60px;" placeholder="Seconds">
+                </div>
+            </div>
+
+            <button type="button" onclick="submitSchedule()">Set Schedule</button>
+        </form>
+    </div>
+
+    <div class="form-container" id="emergency-alert" style="display:none;">
+        <h3>Emergency Alert</h3>
+        <button class="emergency-button" onclick="triggerEmergency()">Trigger Emergency Bell</button>
+    </div>
+
+    <div id="instant-bell" class="form-container" style="display:none;">
+        <h3>Instant Bell Ring</h3>
+        <button type="button" onclick="ringInstantBell()">Instant Bell Ring</button>
+    </div>
+
+    <div class="previous-bell-log" id="previous-bell-log">
+        Previous Bell Rings: <span id="bell-ring-log">None</span>
+    </div>
+
+    <button class="previous-button" id="previous-button" onclick="goToPrevious()" style="display: none;">Previous</button>
+
+    <script>
+        let userRole = 'guest';  // Default role
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin') {
+                userRole = 'admin';
+                showAdminAccess();
+            } else if (username === 'user' && password === 'user') {
+                userRole = 'user';
+                showUserAccess();
+            } else {
+                alert('Invalid login credentials');
+            }
+
+            handleModeChange();
+        }
+
+        function showAdminAccess() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('schedule-form-container').style.display = 'block';
+            document.getElementById('emergency-alert').style.display = 'block';
+            document.getElementById('instant-bell').style.display = 'block';
+            document.getElementById('previous-button').style.display = 'block';
+        }
+
+        function showUserAccess() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('schedule-form-container').style.display = 'block';
+            document.getElementById('previous-button').style.display = 'block';
+
+            const modeSelect = document.getElementById('mode');
+            modeSelect.value = 'exam';  // Default to 'Exam' mode
+            modeSelect.disabled = true;  // Disable mode selection for user
+        }
+
+        function handleModeChange() {
+            const modeSelect = document.getElementById('mode');
+            const customTimesDiv = document.getElementById('custom-times');
+            const regularTimesDiv = document.getElementById('regular-times');
+            const examTimesDiv = document.getElementById('exam-times');
+
+            const selectedMode = modeSelect.value;
+            customTimesDiv.style.display = 'none';
+            regularTimesDiv.style.display = 'none';
+            examTimesDiv.style.display = 'none';
+
+            if (selectedMode === 'custom') {
+                customTimesDiv.style.display = 'block';
+                generateCustomTimeBlock();
+            } else if (selectedMode === 'regular') {
+                regularTimesDiv.style.display = 'block';
+                generateTimeBlocks('regular', 8);
+            } else if (selectedMode === 'exam') {
+                examTimesDiv.style.display = 'block';
+                generateTimeBlocks('exam', 4);
+            }
+        }
+
+        function generateCustomTimeBlock() {
+            const container = document.getElementById('custom-time-group');
+            container.innerHTML = '';  // Clear existing time blocks
+            const timeBlock = document.createElement('div');
+            timeBlock.classList.add('time-group');
+            timeBlock.innerHTML = `
+                <input type="time" class="custom-bell-time" value="09:00">
+                <button type="button" onclick="removeTime(this)">Remove</button>
+            `;
+            container.appendChild(timeBlock);
+        }
+
+        function generateTimeBlocks(mode, count) {
+            const container = document.getElementById(`${mode}-time-group`);
+            container.innerHTML = '';  // Clear existing time blocks
+            for (let i = 0; i < count; i++) {
+                const timeBlock = document.createElement('div');
+                timeBlock.classList.add('time-group');
+                timeBlock.innerHTML = `
+                    <input type="time" class="${mode}-bell-time" value="09:00">
+                    <button type="button" onclick="removeTime(this)">Remove</button>
+                `;
+                container.appendChild(timeBlock);
+            }
+        }
+
+        function addRegularTime() {
+            const regularTimesDiv = document.getElementById('regular-time-group');
+            const timeGroup = document.createElement('div');
+            timeGroup.classList.add('time-group');
+            timeGroup.innerHTML = `
+                <input type="time" class="regular-bell-time" value="09:00">
+                <button type="button" onclick="removeTime(this)">Remove</button>
+            `;
+            regularTimesDiv.appendChild(timeGroup);
+        }
+
+        function addExamTime() {
+            const examTimesDiv = document.getElementById('exam-time-group');
+            const timeGroup = document.createElement('div');
+            timeGroup.classList.add('time-group');
+            timeGroup.innerHTML = `
+                <input type="time" class="exam-bell-time" value="09:00">
+                <button type="button" onclick="removeTime(this)">Remove</button>
+            `;
+            examTimesDiv.appendChild(timeGroup);
+        }
+
+        function addCustomTime() {
+            const customTimesDiv = document.getElementById('custom-time-group');
+            const timeGroup = document.createElement('div');
+            timeGroup.classList.add('time-group');
+            timeGroup.innerHTML = `
+                <input type="time" class="custom-bell-time" value="09:00">
+                <button type="button" onclick="removeTime(this)">Remove</button>
+            `;
+            customTimesDiv.appendChild(timeGroup);
+        }
+
+        function removeTime(button) {
+            button.parentNode.remove();
+        }
+
+        function submitSchedule() {
+            alert('Schedule Submitted Successfully!');
+        }
+
+        function triggerEmergency() {
+            alert('Emergency Bell Triggered!');
+        }
+
+        function ringInstantBell() {
+            alert('Instant Bell Ringing Now!');
+        }
+
+        function goToPrevious() {
+            window.location.reload();  // Navigate back to the login page
+        }
+    </script>
+</body>
+</html>
